@@ -1,0 +1,112 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YouTuber Brawl</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#09091b;color:white;font-family:Arial;text-align:center}
+h1{font-size:clamp(32px,8vw,55px);color:#20f5ff;text-shadow:0 0 18px #ff25c9}
+main{max-width:850px;margin:auto;padding:15px}
+.panel{background:#171733;border:1px solid #713dba;border-radius:16px;padding:15px;margin:14px 0}
+button,select{padding:12px;margin:5px;border:1px solid #21eaff;border-radius:10px;background:#24244c;color:white;font-weight:bold}
+button:active{background:#a328b9}
+#roster{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+#roster button.selected{background:#087b85;box-shadow:0 0 12px cyan}
+canvas{width:100%;background:linear-gradient(#17133d,#45145a 65%,#100d24 65%);border:2px solid #a33cff;border-radius:12px}
+.health{height:13px;background:#444;border-radius:9px;overflow:hidden;margin:6px}
+.health span{display:block;height:100%;background:#39ed85;width:100%}
+.controls{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.controls button{padding:16px 5px}
+#message{color:#ffe66b;min-height:25px;font-weight:bold}
+</style>
+</head>
+<body>
+<main>
+<h1>YOUTUBER BRAWL</h1>
+<p>⚡ Choose your fighter. Enter the arena. Become champion! ⚡</p>
+<section class="panel">
+<h3>CHOOSE YOUR FIGHTER</h3>
+<div id="roster"></div>
+<h3>GAME MODE</h3>
+<button onclick="mode='Exhibition';say('Exhibition mode selected')">Exhibition</button>
+<button onclick="mode='Tournament';say('Tournament mode selected')">Tournament</button>
+<br><button onclick="start()" style="background:#a323a9">START FIGHT</button>
+</section>
+<section class="panel">
+<h3>NEON ARENA</h3>
+<div style="display:flex;justify-content:space-between">
+<div style="width:48%">YOU<div class="health"><span id="hp"></span></div></div>
+<div style="width:48%">RIVAL<div class="health"><span id="ehp"></span></div></div>
+</div>
+<canvas id="arena" width="800" height="350"></canvas>
+<div id="message">Choose a fighter to begin!</div>
+<div class="controls">
+<button onclick="move(-20)">◀ MOVE</button>
+<button onclick="hit(10)">👊 PUNCH</button>
+<button onclick="move(20)">MOVE ▶</button>
+<button onclick="hit(15)">🦵 KICK</button>
+<button onclick="block()">🛡 BLOCK</button>
+<button onclick="hit(25)">⚡ SPECIAL</button>
+</div>
+</section>
+<p>Play on your phone or computer!</p>
+</main>
+<script>
+const fighters=["MrBeast","KSI","IShowSpeed","Kai Cenat","Logan Paul","Ninja","PewDiePie","Markiplier","Dream","PrestonPlayz","Dude Perfect","Your Creator"];
+const colors=["#25eaff","#ff467c","#ffd34e","#a879ff","#ff9b43","#39ff9b","#ff4bda","#eeeeee","#aaff55","#ff7144","#62a8ff","#fff"];
+let chosen=0,mode="Exhibition",player=100,enemy=100,x=210,ex=590,playing=false,guard=false;
+const roster=document.getElementById("roster");
+fighters.forEach((name,i)=>{
+ let b=document.createElement("button");
+ b.textContent=name;
+ if(i===0)b.classList.add("selected");
+ b.onclick=()=>{chosen=i;document.querySelectorAll("#roster button").forEach(q=>q.classList.remove("selected"));b.classList.add("selected");say(name+" selected!")};
+ roster.appendChild(b);
+});
+const c=document.getElementById("arena"),g=c.getContext("2d");
+function say(t){document.getElementById("message").textContent=t}
+function bars(){document.getElementById("hp").style.width=player+"%";document.getElementById("ehp").style.width=enemy+"%"}
+function start(){player=100;enemy=100;x=210;ex=590;playing=true;bars();say("FIGHT! Attack your rival!");draw()}
+function move(n){if(playing){x=Math.max(65,Math.min(430,x+n));draw()}}
+function hit(n){if(!playing)return;say(n===25?"⚡ SPECIAL ATTACK!":"NICE HIT!");enemy=Math.max(0,enemy-n);bars();draw();if(enemy===0){playing=false;say("🏆 YOU WIN! Press START FIGHT to play again.")}}
+function block(){if(playing){guard=true;say("🛡 BLOCKING!");setTimeout(()=>guard=false,700)}}
+function person(x,y,color,flip){
+ g.save();g.translate(x,y);if(flip)g.scale(-1,1);
+ g.shadowColor=color;g.shadowBlur=16;g.fillStyle=color;
+ g.beginPath();g.arc(0,-90,22,0,7);g.fill();
+ g.strokeStyle=color;g.lineWidth=18;g.lineCap="round";
+ g.beginPath();g.moveTo(0,-65);g.lineTo(0,-20);g.moveTo(0,-55);g.lineTo(30,-38);g.moveTo(0,-55);g.lineTo(-27,-35);g.moveTo(0,-20);g.lineTo(-20,15);g.moveTo(0,-20);g.lineTo(22,15);g.stroke();
+ g.restore()
+}
+function draw(){
+ g.clearRect(0,0,800,350);
+ g.fillStyle="#ffffff";g.globalAlpha=.18;
+ for(let i=0;i<12;i++)g.fillRect(i*75+20,20,2,220);
+ g.globalAlpha=1;g.fillStyle="#21eaff";g.fillRect(0,270,800,4);
+ g.fillStyle="#ff35c8";g.fillRect(0,320,800,4);
+ person(x,275,colors[chosen],false);person(ex,275,"#ff438c",true);
+ g.fillStyle="white";g.font="bold 18px Arial";g.textAlign="center";
+ g.fillText(fighters[chosen],x,160);g.fillText("RIVAL",ex,160);
+}
+function rival(){
+ if(!playing)return;
+ if(ex-x>120)ex-=9;
+ else if(!guard){player=Math.max(0,player-5);bars();say("Your rival hit you!")}
+ if(player===0){playing=false;say("KNOCKOUT! Press START FIGHT to try again.")}
+ draw()
+}
+setInterval(rival,900);
+window.addEventListener("keydown",e=>{
+ if(e.key==="ArrowLeft")move(-15);
+ if(e.key==="ArrowRight")move(15);
+ if(e.key.toLowerCase()==="j")hit(10);
+ if(e.key.toLowerCase()==="k")hit(15);
+ if(e.code==="Space")hit(25);
+});
+draw();bars();
+</script>
+</body>
+</html>
